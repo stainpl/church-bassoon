@@ -1,87 +1,182 @@
 'use client'
+import React, { useState, useEffect } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
 
-import { useState } from 'react'
+const HERO_BG = '/home.jpg' 
+const SHUFFLE_IMAGES = [
+  { src: '/image1.png', name: 'Alice', title: 'Worship Leader' },
+  { src: '/image2.png', name: 'Bob', title: 'Youth Pastor' },
+  { src: '/image3.png', name: 'Carol', title: 'Choir Director' },
+  { src: '/image4.png', name: 'Dave', title: 'Volunteer' },
+]
+const LOOP_VIDEO = '/loop-video.mp4' 
 
-import Hero from './components/Hero'
-import Slider from './components/Slider'
-import FancyCard from './components/FancyCard'
-import Footer from './components/Footer'
-
-
-
-export default function Home() {
-  const [showModal, setShowModal] = useState(false)
+export default function HomePage() {
+  // Image shuffler state
+  const [idx, setIdx] = useState(0)
+  useEffect(() => {
+    const timer = setInterval(() => setIdx(i => (i + 1) % SHUFFLE_IMAGES.length), 4000)
+    return () => clearInterval(timer)
+  }, [])
 
   return (
-    <> 
-            
-      <Hero />
+    <div className="space-y-24">
 
-      <div className="py-16 bg-gray-800">
-        <FancyCard
-          description="We are a community dedicated to faith, fellowship, and service. Join us for worship, events, and outreach!"
-          verse="Now faith is the assurance of things hoped for, the conviction of things not seen."
-          citation="Hebrews 11:1"
-        />
-      </div>
+      {/* Hero */}
+      <section
+        className="h-screen flex items-center justify-center bg-cover bg-center"
+        style={{ backgroundImage: `url(${HERO_BG})` }}
+      >
+        <h1 className="text-6xl md:text-8xl font-extrabold text-white drop-shadow-lg text-center">
+        Laboris duis ullamco ipsum nisi do consectetur cupidatat
+        </h1>
+      </section>
 
-      <Slider />
+      {/* 1. Big Text Card */}
+      <section className="container mx-auto px-6">
+  <div className="bg-white p-12 rounded-lg shadow-lg">
+    
+    <p className="text-3xl leading-relaxed italic">
+      “Lorem ipsum dolor sit amet, nisi nisi sed. Do laboris enim labore amet elit esse in irure labore. 
+      Voluptate ullamco laborum proident do labore fugiat officia pariatur cillum proident aliqua.”
+    </p>
+    <p className="mt-4 text-right font-medium">
+      — Pastor Udomeje
+    </p>
+  </div>
+</section>
 
-      <div className="bg-gray-100 py-10 px-6 mt-16">
-        <hr className="border-t border-gray-300 mb-8" />
-
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-gray-700">
-          {/* Left Column */}
-          <div>
-            <h3 className="font-semibold text-lg mb-2">Stay Connected</h3>
-            <p className="text-sm">
-              Join us as we grow together in faith, love, and service. Follow updates, share requests, and support the ministry.
-            </p>
-          </div>
-
-          {/* Center Column */}
-          <div>
-            <h3 className="font-semibold text-lg mb-2">Quick Links</h3>
-            <ul className="space-y-2 text-sm">
-              <li><a href="/blog" className="hover:underline">Blog</a></li>
-              <li><a href="/prayer-request" className="hover:underline">Request Prayer</a></li>
-              <li><a href="/donate" className="hover:underline">Make a Donation</a></li>
-              <li><a href="/community" className="hover:underline">Community</a></li>
-              <li><a href="/contact" className="hover:underline">Contact Us</a></li>
-
-            </ul>
-          </div>
-
-          {/* Right Column */}
-          <div>
-            <h3 className="font-semibold text-lg mb-2">Newsletter</h3>
-            <form className="flex flex-col space-y-2">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="px-3 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="submit"
-                className="bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-              >
-                Sign Up
-              </button>
-            </form>
-
-            <div className="flex space-x-4 mt-4 text-xl">
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer"><i className="fab fa-facebook-f"></i></a>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer"><i className="fab fa-twitter"></i></a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer"><i className="fab fa-instagram"></i></a>
-              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer"><i className="fab fa-youtube"></i></a>
-            </div>
+      {/* 2. Image Shuffler */}
+      <section className="container mx-auto px-6 flex flex-col md:flex-row items-center gap-8">
+        <div className="w-full md:w-1/2">
+          <div className="w-64 h-64 md:w-80 md:h-80 bg-white rounded-lg shadow-lg transform transition-transform duration-500 hover:rotate-3 hover:-translate-y-2">
+            <Image
+              src={SHUFFLE_IMAGES[idx].src}
+              alt={SHUFFLE_IMAGES[idx].name}
+              width={320}
+              height={320}
+              className="rounded-lg object-cover"
+            />
           </div>
         </div>
+        <div className="w-full md:w-1/2 text-center md:text-left">
+          <h3 className="text-2xl font-semibold">{SHUFFLE_IMAGES[idx].name}</h3>
+          <p className="italic text-gray-600">{SHUFFLE_IMAGES[idx].title}</p>
+        </div>
+      </section>
 
-        <hr className="border-t border-gray-300 mt-12" />
-      </div>
+      {/* 3. YouTube Embed Placeholder */}
+      <section className="container mx-auto px-6">
+        <div className="aspect-video w-full rounded-lg overflow-hidden shadow-lg">
+          {/* Replace src with your video URL when ready */}
+          <iframe
+            className="w-full h-full"
+            src="https://www.youtube.com/embed/VIDEO_ID"
+            title="Church Video"
+            frameBorder="0"
+            allowFullScreen
+          />
+        </div>
+      </section>
 
-      <Footer />
-    </>
+      {/* 4. Static Cover Card */}
+      <section className="container mx-auto px-6">
+        <div className="bg-cover bg-center h-64 rounded-lg shadow-lg relative" style={{ backgroundImage: `url('/cover-photo.jpg')` }}>
+          <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg p-6 flex flex-col justify-end">
+            <h2 className="text-3xl text-white font-bold">Our Story</h2>
+            <p className="text-white mt-2">Discover how our community began and grew.</p>
+            <Link href="/our-story" className="mt-4 inline-flex items-center text-white font-medium hover:underline">
+                View More →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Blog Section */}
+      <section className="container mx-auto px-6">
+        <h2 className="text-3xl font-semibold mb-6">Latest from Our Blog</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            { id: 1, cover: '/blog1.jpg', title: 'Hope in Action', desc: 'How our outreach program changes lives.' },
+            { id: 2, cover: '/blog2.jpg', title: 'Faith & Fellowship', desc: 'Building deeper connections.' },
+            { id: 3, cover: '/blog3.jpg', title: 'Journey of Service', desc: 'Stories from our volunteers.' },
+          ].map(post => (
+            <div key={post.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <Image src={post.cover} alt={post.title} width={400} height={250} className="object-cover" />
+              <div className="p-4">
+                <h3 className="text-xl font-semibold">{post.title}</h3>
+                <p className="text-gray-600 mt-2">{post.desc}</p>
+                <Link href={`/blog/${post.id}`} className="mt-3 inline-flex items-center text-blue-600 hover:underline">
+                    Read more →
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 6. Looping Video */}
+      <section className="container mx-auto px-6">
+        <video
+          src={LOOP_VIDEO}
+          autoPlay
+          muted
+          loop
+          className="w-full rounded-lg shadow-lg object-cover"
+        />
+      </section>
+
+      {/* 7. Activities Schedule */}
+      <section className="container mx-auto px-6">
+        <h2 className="text-3xl font-semibold mb-6 text-center">Weekly Activities</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { day: 'Sunday', time: '9:00 AM Worship' },
+            { day: 'Tuesday', time: '7:00 PM Bible Study' },
+            { day: 'Thursday', time: '6:00 PM Youth Group' },
+          ].map(act => (
+            <div key={act.day} className="bg-white rounded-lg shadow-lg p-6 text-center">
+              <h3 className="text-xl font-medium">{act.day}</h3>
+              <p className="mt-2 text-gray-600">{act.time}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Divider */}
+      <hr className="border-gray-300 my-12" />
+
+      {/* Useful Links & Headlines */}
+      <section className="container mx-auto px-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {[
+            { icon: '📅', label: 'Events', href: '/events' },
+            { icon: '📖', label: 'Sermons', href: '/sermons' },
+            { icon: '🤝', label: 'Donate', href: '/donate' },
+            { icon: '✉️', label: 'Contact', href: '/contact' },
+          ].map(link => (
+            <Link key={link.label} href={link.href} className="flex items-center space-x-2 p-4 bg-white rounded-lg shadow hover:bg-gray-50">
+                <span className="text-2xl">{link.icon}</span>
+                <span className="font-medium">{link.label}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-gray-400 py-8">
+        <div className="container mx-auto px-6 text-center md:flex md:justify-between">
+          <div className="mb-4 md:mb-0">
+            © {new Date().getFullYear()} Church Pilar. All rights reserved.
+          </div>
+          <div className="space-x-4">
+            <Link href="/privacy" className="hover:underline">Privacy</Link>
+            <Link href="/terms" className="hover:underline">Terms </Link>
+            <Link href="/contact" className="hover:underline">Contact </Link>
+          </div>
+        </div>
+      </footer>
+    </div>
   )
 }

@@ -1,204 +1,228 @@
-// app/components/Navbar.tsx
-'use client';
-import React, { useState, useRef, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
+// components/NavBar.tsx
+'use client'
 
+import React, { useState, useRef, useEffect } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useAuth } from '@/lib/authProvider'
 import {
-  FaUsers, FaHistory, FaPhone, FaMusic, FaPlayCircle,
-  FaTv, FaVideo, FaImage, FaCalendarAlt, FaStar,
-  FaGift, FaHandHoldingHeart, FaUserPlus, FaSignInAlt,
-  FaBullseye, FaBible, FaHandsHelping,FaUserShield
-} from 'react-icons/fa';
+  Bars3Icon,
+  XMarkIcon,
+  ChevronDownIcon,
+} from '@heroicons/react/24/outline'
+import { Inter } from 'next/font/google'
+import {
+  FaBook,
+  FaChurch,
+  FaEnvelope,
+  FaChild,
+  FaMusic,
+  FaHandsHelping,
+  FaGlobe,
+  FaCalendarAlt,
+  FaClock,
+  FaClipboardCheck,
+  FaSignInAlt,
+  FaUserPlus,
+  FaUserTie,
+} from 'react-icons/fa'
+import { LoaderCentered } from './LoaderCentered'
 
-type MenuKey = 'about' | 'ministries' | 'sermons' | 'events' | 'giving' | 'account';
+const inter = Inter({ subsets: ['latin'], weight: ['400', '700'] })
 
-const MENU: Record<MenuKey, { label: string; items: { label: string; href: string; icon: React.ReactNode }[] }> = {
-  about: {
+
+
+type NavItem = {
+  label: string
+  href?: string
+  icon?: React.ReactNode
+  subItems?: { label: string; href: string; icon?: React.ReactNode }[]
+}
+
+const NAV_ITEMS: NavItem[] = [
+  {
     label: 'About',
-    items: [
-      { label: 'Our Mission', href: '/about#mission', icon: <FaBullseye /> },
-      { label: 'Leadership / Pastors', href: '/about#leadership', icon: <FaUsers /> },
-      { label: 'History', href: '/about#history', icon: <FaHistory /> },
-      { label: 'What We Believe', href: '/about#belief', icon: <FaBible /> },
-      { label: 'Contact & Location', href: '/about#contact', icon: <FaPhone /> },
+    subItems: [
+      { label: 'What We Teach', href: '/about/teach', icon: <FaBook /> },
+      { label: 'The Church', href: '/about/church', icon: <FaChurch /> },
+      { label: 'Contact Us', href: '/about/contact', icon: <FaEnvelope /> },
     ],
   },
-  ministries: {
+  {
     label: 'Ministries',
-    items: [
-      { label: 'Bible Society', href: '/ministries/bible', icon: <FaBible /> },
-      { label: 'English Choir', href: '/ministries/english-choir', icon: <FaMusic /> },
-      { label: 'Tiv Choir', href: '/ministries/tiv-choir', icon: <FaMusic /> },
-      { label: 'Girls Brigade', href: '/ministries/girls-brigade', icon: <FaHandHoldingHeart /> },
-      { label: 'Boys Brigade', href: '/ministries/boys-brigade', icon: <FaHandsHelping /> },
-      { label: 'Women Fellowship', href: '/ministries/women-fellowship', icon: <FaHandHoldingHeart /> },
+    subItems: [
+      { label: 'Youth', href: '/ministries/youth', icon: <FaChild /> },
+      { label: 'Music', href: '/ministries/music', icon: <FaMusic /> },
+      { label: 'Outreach', href: '/ministries/outreach', icon: <FaHandsHelping /> },
+      { label: 'Missions', href: '/ministries/missions', icon: <FaGlobe /> },
     ],
   },
-  sermons: {
-    label: 'Sermons & Media',
-    items: [
-      { label: 'Latest Sermon', href: '/sermons/latest', icon: <FaPlayCircle /> },
-      { label: 'Live Stream', href: '/sermons/live', icon: <FaTv /> },
-      { label: 'Video Archive', href: '/sermons/archive', icon: <FaVideo /> },
-      { label: 'Gallery', href: '/sermons/gallery', icon: <FaImage /> },
-    ],
-  },
-  events: {
+  {
     label: 'Events',
-    items: [
-      { label: 'Upcoming Events', href: '/events/upcoming', icon: <FaCalendarAlt /> },
-      { label: 'Weekly Schedules', href: '/events/weekly', icon: <FaCalendarAlt /> },
-      { label: 'Special Programs', href: '/events/special', icon: <FaStar /> },
+    subItems: [
+      { label: 'Upcoming', href: '/events/upcoming', icon: <FaCalendarAlt /> },
+      { label: 'Past', href: '/events/past', icon: <FaClock /> },
+      { label: 'Register', href: '/events/register', icon: <FaClipboardCheck /> },
     ],
   },
-  giving: {
-    label: 'Giving / Donate',
-    items: [
-      { label: 'Tithes', href: '/donate/tithes', icon: <FaGift /> },
-      { label: 'Offerings', href: '/donate/offerings', icon: <FaGift /> },
-      { label: 'Support', href: '/donate/support', icon: <FaHandHoldingHeart /> },
+  {
+    label: 'Member',
+    subItems: [
+      { label: 'Login', href: '/member/login', icon: <FaSignInAlt /> },
+      { label: 'Sign Up', href: '/member/register', icon: <FaUserPlus /> },
+      { label: 'Admin', href: '/admin/login', icon: <FaUserTie /> },
     ],
   },
-  account: {
-    label: 'Account',
-    items: [
-      { label: 'Sign Up', href: '/auth/signup', icon: <FaUserPlus /> },
-      { label: 'Log In', href: '/auth/login', icon: <FaSignInAlt /> },
-      { label: 'Admin', href: '/admin/login', icon: <FaUserShield /> },
-    ],
-  },
-};
+]
 
-export default function Navbar() {
-  const [openMenu, setOpenMenu] = useState<MenuKey | null>(null);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+export const NavBar: React.FC = () => {
+  const { user, loading } = useAuth()
+  const path = usePathname()
 
+  // 1) While we’re checking session: show only “Loading…”
+  if (loading) {
+    return < LoaderCentered />
+  }
+
+  // 2) If logged in (admin or member), or if we’re on an /admin page,
+  if (path.startsWith('/admin') || path.startsWith('/member')) {
+    return (
+      <header className="w-full border-b bg-gray-900 px-4 py-0.5 flex items-center">
+       
+
+        {/* Only show dashboard link & logout if user is actually logged in */}
+        {user && (
+          <div className="flex items-center space-x-4">
+            <Link
+              href={
+                user.role === 'ADMIN'
+                  ? '/admin/dashboard'
+                  : '/member/dashboard'
+              }
+            >    
+            </Link>
+          </div>
+        )}
+      </header>
+    )
+  }
+
+  // 3) Otherwise (not logged in, not an /admin route) → render full public nav:
+  return <PublicNav />
+}
+
+// Extract the full desktop+mobile menu into its own small component:
+const PublicNav: React.FC = () => {
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const [mobileOpenIndex, setMobileOpenIndex] = useState<number | null>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // close dropdown on outside click
   useEffect(() => {
-    function onClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpenMenu(null);
+    const h = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpenIndex(null)
       }
     }
-    document.addEventListener('mousedown', onClickOutside);
-    return () => document.removeEventListener('mousedown', onClickOutside);
-  }, []);
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [])
 
   return (
-    <header className="fixed inset-x-0 top-0 z-30">
-      <nav ref={containerRef} className="relative flex items-center justify-between px-6 py-4">
-        {/* Logo */}
-        <Link href="/" className="z-40">
-          <Image
-            src="/logo1.png"
-            alt="Logo"
-            width={40} // Adjust based on your logo's actual width
-            height={40} // Adjust based on your logo's actual height
-            priority // Optimize for LCP since it's in the navbar
-          />
-        </Link>
+    <header className={`${inter.className} w-full border-b`}>
+      {/* top bar */}
+      <div className="flex items-center justify-between px-4 md:px-8 py-3 bg-gray-800">
+        <div className="text-2xl font-bold text-gray-200">Church Pilar</div>
 
-        {/* Desktop Menu */}
-            {/* Desktop Menu */}
-   <ul className="hidden md:flex space-x-8 z-40">
-  {(Object.keys(MENU) as MenuKey[]).map((key, i, arr) => {
-    const isEdge = i >= arr.length - 2;  // last two items
-    return (
-      <li
-  key={key}
-  className="relative group"
-  onMouseEnter={() => setOpenMenu(key)}
-  onMouseLeave={() => setOpenMenu(null)}
->
-  <button className="font-medium">{MENU[key].label}</button>
+        {/* desktop menu */}
+        <nav className="hidden md:flex space-x-6">
+          {NAV_ITEMS.map((item, idx) => (
+            <div
+              key={item.label}
+              ref={openIndex === idx ? dropdownRef : null}
+              className="relative"
+              onMouseEnter={() => setOpenIndex(idx)}
+              onMouseLeave={() => setOpenIndex(null)}
+            >
+              <button className="flex items-center space-x-1 text-gray-200 hover:text-blue-400">
+                <span>{item.label}</span>
+                <ChevronDownIcon className="w-4 h-4" />
+              </button>
+              {openIndex === idx && item.subItems && (
+                <div className="absolute top-full mt-1 bg-gray-700 shadow-lg rounded p-2 min-w-[12rem] z-20">
+                  {item.subItems.map(si => (
+                    <Link
+                      key={si.label}
+                      href={si.href!}
+                      className="flex items-center space-x-2 p-3 mb-1 bg-gray-600 border border-gray-500 rounded hover:bg-gray-500 text-gray-200"
+                    >
+                      <span className="text-lg">{si.icon}</span>
+                      <span>{si.label}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </nav>
 
-  {openMenu === key && (
-    <div
-      className={`
-        absolute
-        top-full        /* right below the <li> */
-        ${isEdge ? 'right-0' : 'left-0'}
-      `}
-    >
-      {/* 0px gap: no mt-2 here! */}
-      {/* arrow */}
-      <div
-        className={`
-          absolute
-          ${isEdge ? 'right-6' : 'left-6'}
-          -top-2
-          w-4 h-4
-          bg-blue/60
-          backdrop-blur
-          transform rotate-45
-          shadow-sm
-        `}
-      />
-      {/* dropdown panel */}
-      <div className="bg-black/22 backdrop-blur-md rounded-xl shadow-lg p-4 w-72">
-        {MENU[key].items.map(({ label, href, icon }) => (
-          <Link
-            key={label}
-            href={href}
-            className="flex items-center space-x-3 py-2 px-3 rounded hover:bg-white/10 transition text-white"
-          >
-            <span className="text-xl">{icon}</span>
-            <span>{label}</span>
-          </Link>
-        ))}
-      </div>
-    </div>
-  )}
-</li>
-
-    );
-  })}
-</ul>
-
-        {/* Mobile Menu Button */}
-        <button className="md:hidden z-40" onClick={() => setMobileOpen((o) => !o)}>
-          {mobileOpen ? '✕' : '☰'}
+        {/* mobile hamburger */}
+        <button
+          className="md:hidden text-gray-200"
+          onClick={() => setMobileOpen(o => !o)}
+        >
+          {mobileOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
         </button>
+      </div>
 
-        {/* Mobile Panel */}
-        {/* Mobile Panel */}
-           {mobileOpen && (
-            <div className="fixed inset-y-0 right-0 w-3/4 max-w-xs bg-black/60 backdrop-blur-md shadow-lg pt-16 p-6 overflow-auto z-30 text-white">
-              <ul className="space-y-4">
-                  {(Object.keys(MENU) as MenuKey[]).map((key) => (
-                  <li key={key}>
-                   <button
-                className="w-full text-left font-medium flex justify-between items-center"
-            onClick={() => setOpenMenu((cur) => (cur === key ? null : key))}
-              >
-            {MENU[key].label}
-            <span>{openMenu === key ? '−' : '+'}</span>
-          </button>
-          {openMenu === key && (
-            <ul className="mt-2 space-y-2">
-              {MENU[key].items.map(({ label, href, icon }) => (
-                <Link
-                  key={label}
-                  href={href}
-                  className="flex items-center space-x-3 pl-4 py-2 rounded hover:bg-white/10 transition"
+      {/* mobile menu */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 bg-gray-800/95 backdrop-blur-sm p-6 z-30 overflow-auto">
+          <div className="flex justify-end">
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="p-2 hover:bg-gray-700 rounded text-gray-200"
+            >
+              <XMarkIcon className="w-6 h-6" />
+            </button>
+          </div>
+          <div className="flex flex-col space-y-4">
+            {NAV_ITEMS.map((item, idx) => (
+              <div key={item.label} className="space-y-2">
+                <button
+                  onClick={() =>
+                    setMobileOpenIndex(mobileOpenIndex === idx ? null : idx)
+                  }
+                  className="w-full text-left flex justify-between items-center bg-gray-700 p-3 rounded hover:bg-gray-600 text-gray-200"
                 >
-                  <span className="text-lg">{icon}</span>
-                  <span>{label}</span>
-                </Link>
-              ))}
-            </ul>
-          )}
-        </li>
-         ))}
-    </ul>
-  </div>
-)}
-
-      </nav>
-
-      {/* Pass‑through transparent backdrop */}
-      <div className="absolute inset-0 pointer-events-none bg-transparent" />
+                  <span className="text-lg font-medium">{item.label}</span>
+                  <ChevronDownIcon
+                    className={`w-5 h-5 transition-transform ${
+                      mobileOpenIndex === idx ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+                {mobileOpenIndex === idx && item.subItems && (
+                  <div className="pl-4 flex flex-col space-y-2 mt-1">
+                    {item.subItems.map(si => (
+                      <Link
+                        key={si.label}
+                        href={si.href!}
+                        className="flex items-center space-x-2 p-3 bg-gray-600 border border-gray-500 rounded hover:bg-gray-500 text-gray-200"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        <span className="text-lg">{si.icon}</span>
+                        <span>{si.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </header>
-  );
+  )
 }

@@ -7,42 +7,44 @@ generator client {
   provider = "prisma-client-js"
 }
 
-enum Role {
-  ADMIN
-  MEMBER
-}
-
 model User {
-  id         String    @id @default(uuid())
-  name       String
-  email      String?   @unique
-  phone      String?
-  title      String?
-  image      String?
-  address    String?
-  password String
-  role     Role     @default(MEMBER)
-  uniqueId   String    @unique
-  payments   Payment[]
-  createdAt  DateTime  @default(now())
+  id             String    @id @default(uuid())
+  name           String
+  email          String?   @unique
+  phone          String?
+  title          String?
+  image          String?
+  address        String?
+  dateOfBirth    DateTime?
+  passwordHash   String
+  role           Role      @default(MEMBER)
+  uniqueId       String    @unique @default(uuid())
+  blogs          Blog[]
+  payments       Payment[]
+  createdAt      DateTime  @default(now())
+  noticesAdded   Notice[]  @relation("NoticeAddedBy")
+  noticesRemoved Notice[]  @relation("NoticeRemovedBy")
 }
 
 model Post {
-  id         String    @id @default(uuid())
-  title      String
-  content    String
-  mediaUrl   String?
-  mediaType  String?
-  createdAt  DateTime  @default(now())
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  mediaUrl  String?
+  mediaType String?
+  createdAt DateTime @default(now())
 }
 
 model Blog {
-  id         String    @id @default(uuid())
+  id         String   @id @default(uuid())
   title      String
   content    String
   youtubeUrl String?
-  image      String?
-  createdAt  DateTime  @default(now())
+  coverUrl   String?
+  authorId   String
+  authorUser User     @relation(fields: [authorId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Payment {
@@ -53,7 +55,7 @@ model Payment {
   amount      Float
   createdAt   DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
 model Admin {
@@ -62,3 +64,20 @@ model Admin {
   password String
 }
 
+model Notice {
+  id            String    @id @default(uuid())
+  text          String
+  addedBy       String
+  addedByUser   User      @relation("NoticeAddedBy", fields: [addedBy], references: [id])
+  removed       Boolean   @default(false)
+  removedBy     String?
+  removedByUser User?     @relation("NoticeRemovedBy", fields: [removedBy], references: [id])
+  removedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}

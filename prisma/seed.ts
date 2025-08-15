@@ -1,42 +1,37 @@
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
-import { nanoid } from 'nanoid';
-import dotenv from 'dotenv';
+import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
+import { randomUUID } from 'crypto'
 
-dotenv.config();
 
-const prisma = new PrismaClient();
+
+
+const prisma = new PrismaClient()
 
 async function main() {
-  const adminEmail = process.env.ADMIN_EMAIL;
-  const adminPassword = process.env.ADMIN_PASSWORD;
+  const email = 'pilar@mchurch.com'
+  const plain = 'SuperPilar'
+  const hash = await bcrypt.hash(plain, 10)
 
-  if (!adminEmail || !adminPassword) {
-    throw new Error('ADMIN_EMAIL and ADMIN_PASSWORD must be set in .env');
-  }
-
-  const hashedPassword = await bcrypt.hash(adminPassword, 10);
-
-  await prisma.user.upsert({
-    where: { email: adminEmail },
-    update: {},
+  const admin = await prisma.user.upsert({
+    where: { email },
+    update: { passwordHash: hash },
     create: {
-      uniqueId: nanoid(),
-      name: 'Super Admin',
-      email: adminEmail,
-      password: hashedPassword,
-      role: 'ADMIN', 
+      name: 'One Pilar',            
+      email,
+      uniqueId: randomUUID(),       
+      passwordHash: hash,
+      role: 'ADMIN',
     },
-  });
+  })
 
-  console.log(`✅ Admin seeded with email: ${adminEmail}`);
+  console.log(`Seeded admin: ${admin.email}`)
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error seeding admin:', e);
-    process.exit(1);
+    console.error(e)
+    process.exit(1)
   })
   .finally(async () => {
-    await prisma.$disconnect();
-  });
+    await prisma.$disconnect()
+  })

@@ -1,37 +1,58 @@
 // middleware.ts
-import { getToken } from 'next-auth/jwt';
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server'
+import { jwtVerify }               from 'jose'
 
 export async function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
+  const token = req.cookies.get('CHURCH_TOKEN')?.value
+  const { pathname } = req.nextUrl
 
-  // 1. Skip public assets, Next.js internals, and the login page itself
+  // 1) If we’re on a public route, do nothing
   if (
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/favicon.ico') ||
-    pathname === '/admin/login'
+    pathname === '/' ||
+    pathname.startsWith('/api/') ||
+    pathname === '/admin/login' ||
+    pathname === '/member/login' ||
+    pathname === '/member/register'
   ) {
-    return NextResponse.next();
+    return NextResponse.next()
   }
 
-  // 2. Protect /admin/*
-  if (pathname.startsWith('/admin')) {
-    // Try to get a valid token
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  // 2) For any other /admin or /member path, require a token
+  if (pathname.startsWith('/admin') || pathname.startsWith('/member')) {
     if (!token) {
-      // If no token, redirect to login
-      const loginUrl = req.nextUrl.clone();
-      loginUrl.pathname = '/admin/login';
-      return NextResponse.redirect(loginUrl);
+      // redirect to the appropriate login
+      const loginUrl = req.nextUrl.clone()
+      loginUrl.pathname = pathname.startsWith('/admin')
+        ? '/admin/login'
+        : '/member/login'
+      return NextResponse.redirect(loginUrl)
+    }
+
+    try {
+      // 3) verify the JWT
+      await jwtVerify(
+        token,
+        new TextEncoder().encode(process.env.JWT_SECRET)
+      )
+      return NextResponse.next()
+    } catch (err) {
+      console.error('JWT verification failed:', err)
+      const loginUrl = req.nextUrl.clone()
+      loginUrl.pathname = pathname.startsWith('/admin')
+        ? '/admin/login'
+        : '/member/login'
+      return NextResponse.redirect(loginUrl)
     }
   }
 
-  // 3. All other requests continue
-  return NextResponse.next();
+  // 4) everything else is public
+  return NextResponse.next()
 }
 
-// Only run this middleware on /admin/*
 export const config = {
-  matcher: ['/admin/:path*'],
-};
+  // run on both /admin/* and /member/* (except their login & register pages)
+  matcher: [
+    '/admin((?!/login$).*)',
+    '/member((?!/login$|/register$).*)',
+  ],
+}

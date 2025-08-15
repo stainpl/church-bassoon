@@ -1,62 +1,97 @@
-'use client';
+'use client'
+import React, { FormEvent, useState } from 'react'
+import { Input } from '@/app/components/Input'
+import { Loader } from '@/app/components/Loader'
+import { CloseButton } from '@/app/components/CloseButton'
+import { useToast } from '@/lib/toast'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'         
+import { useAuth } from '../../../lib/authProvider'
 
-import { signIn } from 'next-auth/react';
-import { useState } from 'react';
-import TextInput from '@/app/components/ui/TextInput'; 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter() 
+  const { refreshUser } = useAuth()
+  const toast = useToast()
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const res = await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
-    });
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        credentials : 'include',
+      })
 
-    if (res?.ok) {
-      window.location.href = '/admin/dashboard';
-    } else {
-      setError('Invalid credentials');
+
+      if (!res.ok) throw new Error('Login failed')
+      toast('Logged in successfully!', { type: 'success' })
+
+      await refreshUser()
+      
+      router.push('/admin/dashboard') 
+    } catch (err: any) {
+      setError(err.message || 'Unexpected error')
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-black/50 backdrop-blur-md">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Admin Login</h1>
+    <div
+      className="fixed inset-0 flex items-center justify-center bg-cover bg-center"
+      style={{ backgroundImage: "url('/admin-bg.png')" }}
+    >
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <form
+        onSubmit={handleSubmit}
+        className="relative z-10 bg-white/90 backdrop-filter backdrop-blur-md p-8 rounded-lg shadow-lg w-full max-w-sm"
+      >
+        <CloseButton />
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <TextInput
-            label="Email"
-            type="email"
-            placeholder="admin@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+        <h2 className="text-1xl font-semibold mb-6 text-left">Admin Login</h2>
+        {error && <p className="text-red-600 mb-4 text-sm">{error}</p>}
 
-          <TextInput
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+        <Input
+          name="email"
+          type="email"
+          placeholder="Email address"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          required
+        />
+        <Input
+          name="password"
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          required
+        />
 
-          {error && <p className="text-sm text-red-600 text-center">{error}</p>}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full flex justify-center items-center mt-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+        >
+          {loading ? <Loader /> : 'Login'}
+        </button>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+        {/* Forgot password link */}
+        <div className="mt-4 text-center">
+          <Link
+            href="/admin/forgot-password"
+            className="text-sm text-blue-600 hover:underline"
           >
-            Login
-          </button>
-        </form>
-      </div>
-    </main>
-  );
+            Forgot your password?
+          </Link>
+        </div>
+      </form>
+    </div>
+  )
 }
